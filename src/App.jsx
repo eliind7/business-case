@@ -9,7 +9,7 @@ export default function BCDashboard() {
   const [licensePrice, setLicensePrice] = useState(3600);
   const [installCost, setInstallCost] = useState(5000);
   const [meetingsPerWeek, setMeetingsPerWeek] = useState(30);
-  const [startupTimeSaved, setStartupTimeSaved] = useState(480);
+  const [startupTimeSaved, setStartupTimeSaved] = useState(0);
   const [consultantsPerMeeting, setConsultantsPerMeeting] = useState(3);
   const [avgHourlyRate, setAvgHourlyRate] = useState(1200);
   const [weeks, setWeeks] = useState(46);
