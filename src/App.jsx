@@ -9,9 +9,10 @@ export default function BCDashboard() {
   const [licensePrice, setLicensePrice] = useState(3600);
   const [installCost, setInstallCost] = useState(5000);
   const [meetingsPerWeek, setMeetingsPerWeek] = useState(30);
-  const [startupTimeSaved, setStartupTimeSaved] = useState(0);
+  const [startupTimeSaved, setStartupTimeSaved] = useState(480);
   const [consultantsPerMeeting, setConsultantsPerMeeting] = useState(3);
   const [avgHourlyRate, setAvgHourlyRate] = useState(1200);
+  const [captureRate, setCaptureRate] = useState(50);
   const [weeks, setWeeks] = useState(46);
   const [tab, setTab] = useState("overview");
 
@@ -23,7 +24,8 @@ export default function BCDashboard() {
 
   const timeSavedSecondsYear = meetingsPerWeek * startupTimeSaved * weeks;
   const timeSavedHoursYear = timeSavedSecondsYear / 3600;
-  const productivitySavingYear = timeSavedHoursYear * consultantsPerMeeting * avgHourlyRate;
+  const theoreticalSavingYear = timeSavedHoursYear * consultantsPerMeeting * avgHourlyRate;
+  const productivitySavingYear = theoreticalSavingYear * (captureRate / 100);
 
   const netYear1 = productivitySavingYear - totalCostYear1;
   const netYearOngoing = productivitySavingYear - totalLicenseCostYear;
@@ -83,15 +85,15 @@ export default function BCDashboard() {
   }));
 
   function calcNet(st) {
-    const t = meetingsPerWeek * st * weeks / 3600 * consultantsPerMeeting * avgHourlyRate;
+    const t = meetingsPerWeek * st * weeks / 3600 * consultantsPerMeeting * avgHourlyRate * (captureRate / 100);
     return t - totalCostYear1;
   }
   function calcNetMeetings(m) {
-    const t = m * startupTimeSaved * weeks / 3600 * consultantsPerMeeting * avgHourlyRate;
+    const t = m * startupTimeSaved * weeks / 3600 * consultantsPerMeeting * avgHourlyRate * (captureRate / 100);
     return t - totalCostYear1;
   }
   function calcNetRate(r) {
-    const t = meetingsPerWeek * startupTimeSaved * weeks / 3600 * consultantsPerMeeting * r;
+    const t = meetingsPerWeek * startupTimeSaved * weeks / 3600 * consultantsPerMeeting * r * (captureRate / 100);
     return t - totalCostYear1;
   }
   function calcNetScreen(sp) {
@@ -123,7 +125,7 @@ export default function BCDashboard() {
             { label: "Total investering", val: fmt(totalInvestment), color: COLORS.cost },
             { label: "Produktivitetsbesparing/år", val: fmt(productivitySavingYear), color: productivitySavingYear >= 0 ? COLORS.benefit : COLORS.cost },
             { label: "Netto År 1", val: fmt(netYear1), color: netYear1 >= 0 ? COLORS.benefit : COLORS.cost },
-            { label: "Payback-tid", val: paybackMonths > 0 && paybackMonths < 60 ? `${paybackMonths.toFixed(1)} mån` : "N/A", color: COLORS.neutral },
+            { label: "Payback-tid", val: paybackMonths > 0 ? (paybackMonths < 12 ? `${paybackMonths.toFixed(1)} mån` : `${(paybackMonths / 12).toFixed(1)} år`) : "Aldrig", color: COLORS.neutral },
           ].map((k, i) => (
             <div key={i} style={{ background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
               <div style={{ fontSize: 12, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>{k.label}</div>
@@ -144,6 +146,7 @@ export default function BCDashboard() {
               { label: "Tid sparad per möte (sek)", val: startupTimeSaved, set: setStartupTimeSaved, min: -300, max: 300, step: 5, unit: "sek" },
               { label: "Konsulter per möte (snitt)", val: consultantsPerMeeting, set: setConsultantsPerMeeting, min: 1, max: 10, step: 1, unit: "st" },
               { label: "Konsultpris per timme", val: avgHourlyRate, set: setAvgHourlyRate, min: 500, max: 2500, step: 50, unit: "kr" },
+              { label: "Realistisk nyttjandegrad (%)", val: captureRate, set: setCaptureRate, min: 1, max: 100, step: 1, unit: "%" },
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#555", marginBottom: 4 }}>
