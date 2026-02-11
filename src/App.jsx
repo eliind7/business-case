@@ -9,28 +9,28 @@ export default function BCDashboard() {
   const [licensePrice, setLicensePrice] = useState(3600);
   const [installCost, setInstallCost] = useState(5000);
   const [meetingsPerWeek, setMeetingsPerWeek] = useState(30);
-  const [startupTimeSaved, setStartupTimeSaved] = useState(8);
+  const [startupTimeSaved, setStartupTimeSaved] = useState(480);
   const [consultantsPerMeeting, setConsultantsPerMeeting] = useState(3);
   const [avgHourlyRate, setAvgHourlyRate] = useState(1200);
   const [weeks, setWeeks] = useState(46);
   const [tab, setTab] = useState("overview");
 
-  // Calculations
   const totalScreenCost = rooms * screenPrice;
   const totalInstallCost = rooms * installCost;
   const totalLicenseCostYear = rooms * licensePrice;
   const totalInvestment = totalScreenCost + totalInstallCost;
   const totalCostYear1 = totalInvestment + totalLicenseCostYear;
 
-  const timeSavedMinutesYear = meetingsPerWeek * startupTimeSaved * weeks;
-  const timeSavedHoursYear = timeSavedMinutesYear / 60;
-  const productivitySavingYear = (timeSavedHoursYear * consultantsPerMeeting * avgHourlyRate);
+  const timeSavedSecondsYear = meetingsPerWeek * startupTimeSaved * weeks;
+  const timeSavedHoursYear = timeSavedSecondsYear / 3600;
+  const productivitySavingYear = timeSavedHoursYear * consultantsPerMeeting * avgHourlyRate;
 
   const netYear1 = productivitySavingYear - totalCostYear1;
   const netYearOngoing = productivitySavingYear - totalLicenseCostYear;
-  const paybackMonths = totalInvestment / ((productivitySavingYear - totalLicenseCostYear) / 12);
+  const paybackMonths = (productivitySavingYear - totalLicenseCostYear) > 0
+    ? totalInvestment / ((productivitySavingYear - totalLicenseCostYear) / 12)
+    : -1;
 
-  // Waterfall data
   const waterfallData = [
     { name: "Produktivitets-\nbesparing", value: productivitySavingYear, type: "benefit" },
     { name: "Skärm-\nkostnad", value: -totalScreenCost, type: "cost" },
@@ -39,13 +39,10 @@ export default function BCDashboard() {
     { name: "Netto\nÅr 1", value: netYear1, type: "result" },
   ];
 
-  // Build waterfall: each bar has a bottom and top value
-  // runningTotal tracks where we are after each step
   let runningTotal = 0;
   const waterfallBars = waterfallData.map((d, i) => {
     const isLast = i === waterfallData.length - 1;
     if (isLast) {
-      // Final result bar: from 0 to runningTotal
       const bottom = Math.min(0, runningTotal);
       const top = Math.max(0, runningTotal);
       return { ...d, bottom, top, display: runningTotal };
@@ -59,7 +56,6 @@ export default function BCDashboard() {
     }
   });
 
-  // 5-year cashflow
   const cashflow = [];
   let cumulative = 0;
   for (let y = 0; y <= 5; y++) {
@@ -73,7 +69,6 @@ export default function BCDashboard() {
     }
   }
 
-  // Sensitivity data
   const baseNet = netYear1;
   const sensVars = [
     { name: "Uppstartstid sparad", lo: calcNet(startupTimeSaved * 0.5), hi: calcNet(startupTimeSaved * 1.5) },
@@ -88,15 +83,15 @@ export default function BCDashboard() {
   }));
 
   function calcNet(st) {
-    const t = meetingsPerWeek * st * weeks / 60 * consultantsPerMeeting * avgHourlyRate;
+    const t = meetingsPerWeek * st * weeks / 3600 * consultantsPerMeeting * avgHourlyRate;
     return t - totalCostYear1;
   }
   function calcNetMeetings(m) {
-    const t = m * startupTimeSaved * weeks / 60 * consultantsPerMeeting * avgHourlyRate;
+    const t = m * startupTimeSaved * weeks / 3600 * consultantsPerMeeting * avgHourlyRate;
     return t - totalCostYear1;
   }
   function calcNetRate(r) {
-    const t = meetingsPerWeek * startupTimeSaved * weeks / 60 * consultantsPerMeeting * r;
+    const t = meetingsPerWeek * startupTimeSaved * weeks / 3600 * consultantsPerMeeting * r;
     return t - totalCostYear1;
   }
   function calcNetScreen(sp) {
@@ -111,7 +106,6 @@ export default function BCDashboard() {
     { id: "overview", label: "Översikt" },
     { id: "waterfall", label: "Vattenfall" },
     { id: "cashflow", label: "Kassaflöde" },
-
   ];
 
   return (
@@ -124,11 +118,10 @@ export default function BCDashboard() {
           Ska vi köpa in ny teknik i mötesrummen, eller behålla det gamla?
         </p>
 
-        {/* KPI cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
           {[
             { label: "Total investering", val: fmt(totalInvestment), color: COLORS.cost },
-            { label: "Produktivitetsbesparing/år", val: fmt(productivitySavingYear), color: COLORS.benefit },
+            { label: "Produktivitetsbesparing/år", val: fmt(productivitySavingYear), color: productivitySavingYear >= 0 ? COLORS.benefit : COLORS.cost },
             { label: "Netto År 1", val: fmt(netYear1), color: netYear1 >= 0 ? COLORS.benefit : COLORS.cost },
             { label: "Payback-tid", val: paybackMonths > 0 && paybackMonths < 60 ? `${paybackMonths.toFixed(1)} mån` : "N/A", color: COLORS.neutral },
           ].map((k, i) => (
@@ -139,7 +132,6 @@ export default function BCDashboard() {
           ))}
         </div>
 
-        {/* Input sliders */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 24, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
           <h3 style={{ margin: "0 0 16px", fontSize: 16, color: "#333" }}>Justera variabler</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
@@ -149,7 +141,7 @@ export default function BCDashboard() {
               { label: "Licens per rum/år (kr)", val: licensePrice, set: setLicensePrice, min: 0, max: 12000, step: 100, unit: "kr" },
               { label: "Installationskostnad/rum", val: installCost, set: setInstallCost, min: 0, max: 20000, step: 500, unit: "kr" },
               { label: "Möten per vecka (alla rum)", val: meetingsPerWeek, set: setMeetingsPerWeek, min: 10, max: 500, step: 5, unit: "st" },
-              { label: "Tid sparad per möte (min)", val: startupTimeSaved, set: setStartupTimeSaved, min: 1, max: 20, step: 1, unit: "min" },
+              { label: "Tid sparad per möte (sek)", val: startupTimeSaved, set: setStartupTimeSaved, min: -300, max: 300, step: 5, unit: "sek" },
               { label: "Konsulter per möte (snitt)", val: consultantsPerMeeting, set: setConsultantsPerMeeting, min: 1, max: 10, step: 1, unit: "st" },
               { label: "Konsultpris per timme", val: avgHourlyRate, set: setAvgHourlyRate, min: 500, max: 2500, step: 50, unit: "kr" },
             ].map((s, i) => (
@@ -166,7 +158,6 @@ export default function BCDashboard() {
           </div>
         </div>
 
-        {/* Tab navigation */}
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -183,7 +174,6 @@ export default function BCDashboard() {
           ))}
         </div>
 
-        {/* Charts */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
           {tab === "overview" && (
             <div>
@@ -193,16 +183,17 @@ export default function BCDashboard() {
                   { name: "Touchpaneler", value: totalScreenCost, type: "cost" },
                   { name: "Installation", value: totalInstallCost, type: "cost" },
                   { name: "Licenser (år)", value: totalLicenseCostYear, type: "cost" },
-                  { name: "Produktivitet (år)", value: productivitySavingYear, type: "benefit" },
+                  { name: "Produktivitet (år)", value: Math.abs(productivitySavingYear), type: productivitySavingYear >= 0 ? "benefit" : "negative" },
                 ]} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tickFormatter={fmtK} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={v => fmt(v)} />
                   <Bar dataKey="value" name="Belopp" radius={[6, 6, 0, 0]}>
-                    {[totalScreenCost, totalInstallCost, totalLicenseCostYear, productivitySavingYear].map((_, i) => (
-                      <Cell key={i} fill={i < 3 ? COLORS.cost : COLORS.benefit} />
-                    ))}
+                    <Cell fill={COLORS.cost} />
+                    <Cell fill={COLORS.cost} />
+                    <Cell fill={COLORS.cost} />
+                    <Cell fill={productivitySavingYear >= 0 ? COLORS.benefit : COLORS.cost} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -210,6 +201,11 @@ export default function BCDashboard() {
                 <span><span style={{ display: "inline-block", width: 12, height: 12, background: COLORS.cost, borderRadius: 2, marginRight: 6, verticalAlign: "middle" }}/>Kostnad</span>
                 <span><span style={{ display: "inline-block", width: 12, height: 12, background: COLORS.benefit, borderRadius: 2, marginRight: 6, verticalAlign: "middle" }}/>Nytta</span>
               </div>
+              {startupTimeSaved < 0 && (
+                <p style={{ fontSize: 13, color: COLORS.cost, textAlign: "center", marginTop: 8 }}>
+                  ⚠ Negativ tid sparad – den nya lösningen tar längre tid än den gamla!
+                </p>
+              )}
             </div>
           )}
 
@@ -230,7 +226,6 @@ export default function BCDashboard() {
               <div style={{ overflowX: "auto" }}>
               <svg width={totalW + pad * 2 + 40} height={chartH + 100} style={{ display: "block", margin: "0 auto" }}>
                 <g transform={`translate(${pad + 40}, 20)`}>
-                  {/* Grid lines */}
                   {[0, 0.25, 0.5, 0.75, 1].map((f, i) => {
                     const val = minVal + range * (1 - f);
                     const y = f * chartH;
@@ -239,26 +234,21 @@ export default function BCDashboard() {
                       <text x={-15} y={y + 4} textAnchor="end" fontSize={11} fill="#888">{fmtK(val)}</text>
                     </g>;
                   })}
-                  {/* Zero line */}
                   {minVal < 0 && <line x1={-10} x2={totalW} y1={toY(0)} y2={toY(0)} stroke="#999" strokeWidth={1.5} />}
-                  {/* Bars + connectors */}
                   {waterfallBars.map((d, i) => {
                     const x = i * (barW + gap);
                     const yTop = toY(d.top);
                     const yBottom = toY(d.bottom);
                     const h = Math.max(yBottom - yTop, 1);
                     const col = d.type === "benefit" ? COLORS.benefit : d.type === "cost" ? COLORS.cost : (d.display >= 0 ? COLORS.benefit : COLORS.cost);
-                    // Connector: dashed line from this bar's running total to next bar
                     const isLast = i === waterfallBars.length - 1;
                     const isSecondLast = i === waterfallBars.length - 2;
-                    // Running total after this bar (top for positive, bottom for negative)
                     const runAfter = d.type === "result" ? null : (d.value >= 0 ? d.top : d.bottom);
                     return <g key={i}>
                       <rect x={x} y={yTop} width={barW} height={h} fill={col} rx={4} />
                       <text x={x + barW / 2} y={yTop - 8} textAnchor="middle" fontSize={12} fontWeight={600} fill={col}>
                         {d.display >= 0 ? "+" : ""}{fmtK(d.display)}
                       </text>
-                      {/* Connector line to next bar */}
                       {!isLast && !isSecondLast && runAfter !== null && (
                         <line x1={x + barW} x2={x + barW + gap} y1={toY(runAfter)} y2={toY(runAfter)} stroke="#ccc" strokeDasharray="4 2" />
                       )}
