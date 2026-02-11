@@ -148,7 +148,7 @@ export default function BCDashboard() {
               { label: "Pris per touchpanel (kr)", val: screenPrice, set: setScreenPrice, min: 2000, max: 15000, step: 500, unit: "kr" },
               { label: "Licens per rum/år (kr)", val: licensePrice, set: setLicensePrice, min: 0, max: 12000, step: 100, unit: "kr" },
               { label: "Installationskostnad/rum", val: installCost, set: setInstallCost, min: 0, max: 20000, step: 500, unit: "kr" },
-              { label: "Möten per vecka (alla rum)", val: meetingsPerWeek, set: setMeetingsPerWeek, min: 5, max: 100, step: 1, unit: "st" },
+              { label: "Möten per vecka (alla rum)", val: meetingsPerWeek, set: setMeetingsPerWeek, min: 10, max: 500, step: 5, unit: "st" },
               { label: "Tid sparad per möte (min)", val: startupTimeSaved, set: setStartupTimeSaved, min: 1, max: 20, step: 1, unit: "min" },
               { label: "Konsulter per möte (snitt)", val: consultantsPerMeeting, set: setConsultantsPerMeeting, min: 1, max: 10, step: 1, unit: "st" },
               { label: "Konsultpris per timme", val: avgHourlyRate, set: setAvgHourlyRate, min: 500, max: 2500, step: 50, unit: "kr" },
